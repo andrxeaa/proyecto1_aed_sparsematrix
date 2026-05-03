@@ -7,10 +7,9 @@ GUI::GUI(Spreadsheet& s)
     : sheet(s), scrollRow(0), scrollCol(0), selectedRow(0), selectedCol(0), isEditing(false) {
     window.create(sf::VideoMode(1200, 800), "Hoja de Calculo Dispersa - Proyecto 1");
     
-    // Intentar cargar fuente por defecto de Windows
-    if (!font.loadFromFile("C:/Windows/Fonts/arial.ttf")) {
-        // Fallback si no existe
-        std::cerr << "Advertencia: No se pudo cargar arial.ttf. Asegurese de tener una fuente valida." << std::endl;
+    // Cargar fuente local
+    if (!font.loadFromFile("arial.ttf")) {
+        std::cerr << "Advertencia: No se pudo cargar arial.ttf. Asegurese de que el archivo este junto al ejecutable." << std::endl;
     }
     statusMessage = "Listo. Usa las flechas para moverte, Enter para editar. Comandos en consola inferior.";
 }
