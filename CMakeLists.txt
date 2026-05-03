@@ -31,3 +31,10 @@ add_custom_command(TARGET spreadsheet_app POST_BUILD
     "${CMAKE_CURRENT_SOURCE_DIR}/SFML/bin"
     $<TARGET_FILE_DIR:spreadsheet_app>
 )
+
+# Copiar la fuente al directorio del ejecutable
+add_custom_command(TARGET spreadsheet_app POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${CMAKE_CURRENT_SOURCE_DIR}/arial.ttf"
+    $<TARGET_FILE_DIR:spreadsheet_app>
+)

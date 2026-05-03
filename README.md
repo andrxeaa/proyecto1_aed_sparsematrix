@@ -2,27 +2,50 @@
 
 Este proyecto implementa una hoja de cálculo usando una Matriz Dispersa basada en listas enlazadas cruzadas en C++ puro. Incluye una interfaz gráfica sencilla utilizando SFML.
 
-## Requisitos Previos
+## Requisitos Previos e Instalación de SFML
 
-Para compilar este proyecto necesitas:
-1.  **Compilador C++17** (ej. `g++` en Windows MSYS2/MinGW, o en Linux).
-2.  **Librería SFML 2.5 o superior** instalada en tu sistema.
+Para compilar este proyecto necesitas un compilador C++17 (g++) y la librería gráfica **SFML 2.6.x**.
 
-## Compilación
+### Instalación de SFML en Windows (Recomendado)
+Para Windows (MinGW 64-bit GCC 13.1.0), puedes instalar SFML automáticamente usando PowerShell. Abre tu terminal en la carpeta del proyecto y ejecuta estos comandos:
 
-Abre una terminal en este directorio y ejecuta:
+```powershell
+Invoke-WebRequest -Uri "https://www.sfml-dev.org/files/SFML-2.6.1-windows-gcc-13.1.0-mingw-64-bit.zip" -OutFile "SFML.zip"
+Expand-Archive -Path "SFML.zip" -DestinationPath "."
+Rename-Item -Path "SFML-2.6.1" -NewName "SFML"
+Remove-Item "SFML.zip"
+```
+Esto descargará y preparará la carpeta `SFML` exacta que el proyecto necesita.
 
+### Instalación de SFML en Linux / Ubuntu / WSL
+Es mucho más fácil. Abre tu terminal y ejecuta:
 ```bash
-make
+sudo apt update
+sudo apt install libsfml-dev
 ```
 
-Esto generará un ejecutable llamado `spreadsheet_app` (o `spreadsheet_app.exe` en Windows).
+## Compilación del Proyecto
 
-### Si usas Windows y tienes SFML en otra ruta
-Edita las líneas comentadas en el `Makefile` para apuntar a los directorios `include` y `lib` correctos de tu instalación de SFML, por ejemplo:
-`CXXFLAGS += -I"C:\SFML\include"`
-`LDFLAGS = -L"C:\SFML\lib" -lsfml-graphics -lsfml-window -lsfml-system`
+Tienes dos opciones para compilar y ejecutar la hoja de cálculo:
 
+### Opción A: Usando CLion (CMake) - ¡Más fácil!
+1. Abre CLion y selecciona **Open**.
+2. Selecciona el archivo `CMakeLists.txt` que está en esta carpeta y elige "Open as Project".
+3. CLion configurará automáticamente todo gracias al archivo CMake.
+4. Presiona el botón verde de **Play** (Run) en la esquina superior derecha.
+
+### Opción B: Usando la Terminal (Makefile)
+1. Abre tu terminal (en Windows asegúrate de usar MSYS2 o tener `mingw32-make` en tu PATH).
+2. Si pusiste la carpeta `SFML` dentro del proyecto como se indicó arriba, simplemente ejecuta:
+   ```bash
+   make
+   ```
+   *(En Windows con MinGW puede que necesites escribir `mingw32-make` en lugar de `make`)*
+3. **Importante (Solo Windows):** Antes de ejecutar, debes copiar los archivos `.dll` que están en la carpeta `SFML/bin` al lado del archivo `.exe` generado.
+4. Ejecuta el programa:
+   ```bash
+   ./spreadsheet_app
+   ```
 ## Ejecución
 
 Ejecuta el archivo generado:
