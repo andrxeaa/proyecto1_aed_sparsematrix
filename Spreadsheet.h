@@ -2,45 +2,39 @@
 #define SPREADSHEET_H
 
 #include "Node.h"
+#include <vector>
 #include <string>
 
 class Spreadsheet {
 private:
-    Node** rowHeaders;
-    Node** colHeaders;
-    int maxRows;
-    int maxCols;
+    // Usamos vectores para las cabeceras (mas estable en Windows)
+    std::vector<Node*> rows;
+    std::vector<Node*> cols;
+    int n_rows;
+    int n_cols;
 
-    void ensureRowCapacity(int r);
-    void ensureColCapacity(int c);
-    
-    // Función auxiliar para re-evaluar todas las fórmulas después de un cambio
     void reevaluateFormulas();
 
 public:
-    Spreadsheet();
+    // Constructor inicializa con un tamaño base que puede crecer
+    Spreadsheet(int n = 100, int m = 26);
     ~Spreadsheet();
 
-    // 1. Operaciones sobre celdas
-    void insert(int r, int c, const std::string& content);
-    Node* get(int r, int c) const;
-    void modify(int r, int c, const std::string& newContent);
-    void remove(int r, int c);
+    // Operaciones Core
+    void insert(int i, int j, const std::string& value);
+    Node* get(int i, int j) const;
+    void remove(int i, int j);
 
-    // 2. Operaciones sobre filas, columnas y rangos
-    void deleteRow(int r);
-    void deleteCol(int c);
-    void deleteRange(int r1, int c1, int r2, int c2);
+    // Operaciones de Fila/Columna
+    void deleteRow(int i);
+    void deleteCol(int j);
+    void deleteRange(int i1, int j1, int i2, int j2);
 
-    // 3. Agregaciones
-    double sum(int r1, int c1, int r2, int c2) const;
-    double average(int r1, int c1, int r2, int c2) const;
-    double max(int r1, int c1, int r2, int c2) const;
-    double min(int r1, int c1, int r2, int c2) const;
-    
-    // Auxiliares
-    int getMaxRowIndex() const { return maxRows - 1; }
-    int getMaxColIndex() const { return maxCols - 1; }
+    // Agregaciones
+    double sum(int i1, int j1, int i2, int j2) const;
+    double average(int i1, int j1, int i2, int j2) const;
+    double max(int i1, int j1, int i2, int j2) const;
+    double min(int i1, int j1, int i2, int j2) const;
 };
 
-#endif // SPREADSHEET_H
+#endif

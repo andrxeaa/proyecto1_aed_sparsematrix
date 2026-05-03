@@ -1,319 +1,229 @@
 #include "Spreadsheet.h"
 #include "FormulaEvaluator.h"
-#include <iostream>
-#include <limits>
 #include <algorithm>
+#include <limits>
 
-Spreadsheet::Spreadsheet() : maxRows(10), maxCols(10) {
-    rowHeaders = new Node*[maxRows];
-    for (int i = 0; i < maxRows; ++i) rowHeaders[i] = nullptr;
-    
-    colHeaders = new Node*[maxCols];
-    for (int i = 0; i < maxCols; ++i) colHeaders[i] = nullptr;
+Spreadsheet::Spreadsheet(int n, int m) : n_rows(n), n_cols(m) {
+    rows.resize(n_rows, nullptr);
+    cols.resize(n_cols, nullptr);
 }
 
 Spreadsheet::~Spreadsheet() {
-    for (int i = 0; i < maxRows; ++i) {
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr) {
+    for (int i = 0; i < n_rows; ++i) {
+        Node* curr = rows[i];
+        while (curr) {
             Node* temp = curr;
-            curr = curr->nextInRow;
+            curr = curr->next_row; // Avanzar por la fila
             delete temp;
         }
     }
-    delete[] rowHeaders;
-    delete[] colHeaders;
 }
 
-void Spreadsheet::ensureRowCapacity(int r) {
-    if (r >= maxRows) {
-        int newMax = std::max(maxRows * 2, r + 1);
-        Node** newHeaders = new Node*[newMax];
-        for (int i = 0; i < newMax; ++i) {
-            newHeaders[i] = (i < maxRows) ? rowHeaders[i] : nullptr;
-        }
-        delete[] rowHeaders;
-        rowHeaders = newHeaders;
-        maxRows = newMax;
-    }
+Node* Spreadsheet::get(int i, int j) const {
+    if (i < 0 || i >= n_rows || j < 0 || j >= n_cols) return nullptr;
+    Node* curr = rows[i];
+    while (curr != nullptr && curr->pos_col < j) curr = curr->next_row;
+    return (curr != nullptr && curr->pos_col == j) ? curr : nullptr;
 }
 
-void Spreadsheet::ensureColCapacity(int c) {
-    if (c >= maxCols) {
-        int newMax = std::max(maxCols * 2, c + 1);
-        Node** newHeaders = new Node*[newMax];
-        for (int i = 0; i < newMax; ++i) {
-            newHeaders[i] = (i < maxCols) ? colHeaders[i] : nullptr;
-        }
-        delete[] colHeaders;
-        colHeaders = newHeaders;
-        maxCols = newMax;
+void Spreadsheet::insert(int i, int j, const std::string& value) {
+    if (i < 0 || j < 0 || i >= n_rows || j >= n_cols) return;
+
+    // Si la celda existe, la eliminamos primero para re-insertar
+    remove(i, j);
+    if (value.empty()) return;
+
+    Node* new_node = new Node(i, j, value);
+
+    // Enlazar en la FILA (recorriendo punteros next_row)
+    Node* prev_r = nullptr;
+    Node* curr_r = rows[i];
+    while (curr_r != nullptr && curr_r->pos_col < j) {
+        prev_r = curr_r;
+        curr_r = curr_r->next_row;
     }
-}
-
-void Spreadsheet::reevaluateFormulas() {
-    // Recorre toda la matriz y reevalúa celdas que empiecen con '='
-    for (int i = 0; i < maxRows; ++i) {
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr) {
-            if (!curr->rawContent.empty() && curr->rawContent[0] == '=') {
-                double res = 0;
-                if (FormulaEvaluator::evaluate(curr->rawContent, *this, res)) {
-                    curr->numericValue = res;
-                    curr->isNumeric = true;
-                } else {
-                    curr->isNumeric = false;
-                }
-            }
-            curr = curr->nextInRow;
-        }
-    }
-}
-
-Node* Spreadsheet::get(int r, int c) const {
-    if (r >= maxRows || c >= maxCols || r < 0 || c < 0) return nullptr;
-    
-    Node* curr = rowHeaders[r];
-    while (curr != nullptr && curr->col <= c) {
-        if (curr->col == c) return curr;
-        curr = curr->nextInRow;
-    }
-    return nullptr;
-}
-
-void Spreadsheet::insert(int r, int c, const std::string& content) {
-    if (r < 0 || c < 0) return;
-    
-    ensureRowCapacity(r);
-    ensureColCapacity(c);
-
-    Node* existing = get(r, c);
-    if (existing != nullptr) {
-        modify(r, c, content);
-        return;
-    }
-
-    Node* newNode = new Node(r, c, content);
-
-    // Enlazar en la fila
-    if (rowHeaders[r] == nullptr || rowHeaders[r]->col > c) {
-        newNode->nextInRow = rowHeaders[r];
-        rowHeaders[r] = newNode;
+    if (prev_r == nullptr) {
+        new_node->next_row = rows[i];
+        rows[i] = new_node;
     } else {
-        Node* curr = rowHeaders[r];
-        while (curr->nextInRow != nullptr && curr->nextInRow->col < c) {
-            curr = curr->nextInRow;
-        }
-        newNode->nextInRow = curr->nextInRow;
-        curr->nextInRow = newNode;
+        new_node->next_row = prev_r->next_row;
+        prev_r->next_row = new_node;
     }
 
-    // Enlazar en la columna
-    if (colHeaders[c] == nullptr || colHeaders[c]->row > r) {
-        newNode->nextInCol = colHeaders[c];
-        colHeaders[c] = newNode;
+    // Enlazar en la COLUMNA (recorriendo punteros next_col)
+    Node* prev_c = nullptr;
+    Node* curr_c = cols[j];
+    while (curr_c != nullptr && curr_c->pos_row < i) {
+        prev_c = curr_c;
+        curr_c = curr_c->next_col;
+    }
+    if (prev_c == nullptr) {
+        new_node->next_col = cols[j];
+        cols[j] = new_node;
     } else {
-        Node* curr = colHeaders[c];
-        while (curr->nextInCol != nullptr && curr->nextInCol->row < r) {
-            curr = curr->nextInCol;
-        }
-        newNode->nextInCol = curr->nextInCol;
-        curr->nextInCol = newNode;
+        new_node->next_col = prev_c->next_col;
+        prev_c->next_col = new_node;
     }
 
     reevaluateFormulas();
 }
 
-void Spreadsheet::modify(int r, int c, const std::string& newContent) {
-    Node* node = get(r, c);
-    if (node != nullptr) {
-        // Re-creamos el objeto en la misma direccion de memoria con placement new para simplificar
-        // O simplemente reasignamos:
-        node->rawContent = newContent;
-        // Re-evaluar valor numerico basico
-        node->isNumeric = false;
-        node->numericValue = 0.0;
-        try {
-            if (!newContent.empty() && newContent[0] != '=') {
-                size_t idx;
-                double val = std::stod(newContent, &idx);
-                if (idx == newContent.length() || newContent.find_first_not_of(" \t", idx) == std::string::npos) {
-                    node->numericValue = val;
-                    node->isNumeric = true;
-                }
-            }
-        } catch (...) {}
-        
-        reevaluateFormulas();
-    } else {
-        insert(r, c, newContent);
-    }
-}
+void Spreadsheet::remove(int i, int j) {
+    if (i < 0 || j < 0 || i >= n_rows || j >= n_cols) return;
 
-void Spreadsheet::remove(int r, int c) {
-    if (r >= maxRows || c >= maxCols || r < 0 || c < 0) return;
-
-    Node* target = nullptr;
-
-    // Desenlazar de la fila
-    if (rowHeaders[r] != nullptr) {
-        if (rowHeaders[r]->col == c) {
-            target = rowHeaders[r];
-            rowHeaders[r] = target->nextInRow;
-        } else {
-            Node* curr = rowHeaders[r];
-            while (curr->nextInRow != nullptr && curr->nextInRow->col != c) {
-                curr = curr->nextInRow;
-            }
-            if (curr->nextInRow != nullptr) {
-                target = curr->nextInRow;
-                curr->nextInRow = target->nextInRow;
-            }
-        }
+    // Localizar y desenlazar de la FILA
+    Node* prev_r = nullptr;
+    Node* target = rows[i];
+    while (target != nullptr && target->pos_col < j) {
+        prev_r = target;
+        target = target->next_row;
     }
 
-    if (target == nullptr) return; // No existe
+    if (target == nullptr || target->pos_col != j) return; // No existe
 
-    // Desenlazar de la columna
-    if (colHeaders[c] != nullptr) {
-        if (colHeaders[c]->row == r) {
-            colHeaders[c] = colHeaders[c]->nextInCol;
-        } else {
-            Node* curr = colHeaders[c];
-            while (curr->nextInCol != nullptr && curr->nextInCol->row != r) {
-                curr = curr->nextInCol;
-            }
-            if (curr->nextInCol != nullptr) {
-                curr->nextInCol = curr->nextInCol->nextInCol;
-            }
-        }
+    if (prev_r == nullptr) rows[i] = target->next_row;
+    else prev_r->next_row = target->next_row;
+
+    // Desenlazar de la COLUMNA
+    Node* prev_c = nullptr;
+    Node* curr_c = cols[j];
+    while (curr_c != nullptr && curr_c != target) {
+        prev_c = curr_c;
+        curr_c = curr_c->next_col;
     }
+    if (prev_c == nullptr) cols[j] = target->next_col;
+    else prev_c->next_col = target->next_col;
 
     delete target;
     reevaluateFormulas();
 }
 
-void Spreadsheet::deleteRow(int r) {
-    if (r >= maxRows || r < 0) return;
-    
-    // Eliminamos cada celda de la fila desde la cabeza (usando nuestra logica robusta)
-    while (rowHeaders[r] != nullptr) {
-        remove(r, rowHeaders[r]->col);
+// Implementación de SUMA de Rango
+double Spreadsheet::sum(int i1, int j1, int i2, int j2) const {
+    double total = 0;
+    int r_start = std::min(i1, i2), r_end = std::max(i1, i2);
+    int c_start = std::min(j1, j2), c_end = std::max(j1, j2);
+
+    for (int i = r_start; i <= r_end; ++i) {
+        if (i >= n_rows) break;
+        Node* curr = rows[i];
+        while (curr != nullptr && curr->pos_col <= c_end) {
+            if (curr->pos_col >= c_start && curr->isNumeric) {
+                total += curr->numericValue;
+            }
+            curr = curr->next_row;
+        }
+    }
+    return total;
+}
+
+void Spreadsheet::reevaluateFormulas() {
+    for (int i = 0; i < n_rows; ++i) {
+        Node* curr = rows[i];
+        while (curr) {
+            if (!curr->rawContent.empty() && curr->rawContent[0] == '=') {
+                double res = 0;
+                if (FormulaEvaluator::evaluate(curr->rawContent, *this, res)) {
+                    curr->numericValue = res;
+                    curr->isNumeric = true;
+                }
+            }
+            curr = curr->next_row;
+        }
     }
 }
 
-void Spreadsheet::deleteCol(int c) {
-    if (c >= maxCols || c < 0) return;
-    
-    while (colHeaders[c] != nullptr) {
-        remove(colHeaders[c]->row, c);
+
+// Operaciones de Eliminación
+void Spreadsheet::deleteRow(int i) {
+    if (i < 0 || i >= n_rows) return;
+    // Mientras la fila tenga nodos, eliminamos el primero repetidamente
+    while (rows[i] != nullptr) {
+        remove(i, rows[i]->pos_col);
     }
 }
 
-void Spreadsheet::deleteRange(int r1, int c1, int r2, int c2) {
-    int startRow = std::min(r1, r2);
-    int endRow = std::max(r1, r2);
-    int startCol = std::min(c1, c2);
-    int endCol = std::max(c1, c2);
+void Spreadsheet::deleteCol(int j) {
+    if (j < 0 || j >= n_cols) return;
+    // Mientras la columna tenga nodos, eliminamos el primero repetidamente
+    while (cols[j] != nullptr) {
+        remove(cols[j]->pos_row, j);
+    }
+}
 
-    for (int i = startRow; i <= endRow; ++i) {
-        if (i >= maxRows) break;
-        Node* curr = rowHeaders[i];
+void Spreadsheet::deleteRange(int i1, int j1, int i2, int j2) {
+    int r_start = std::min(i1, i2), r_end = std::max(i1, i2);
+    int c_start = std::min(j1, j2), c_end = std::max(j1, j2);
+
+    for (int i = r_start; i <= r_end; ++i) {
+        if (i >= n_rows) break;
+        Node* curr = rows[i];
         while (curr != nullptr) {
-            Node* next = curr->nextInRow;
-            if (curr->col >= startCol && curr->col <= endCol) {
-                remove(curr->row, curr->col);
+            Node* next = curr->next_row; // Guardar el siguiente antes de borrar el actual
+            if (curr->pos_col >= c_start && curr->pos_col <= c_end) {
+                remove(curr->pos_row, curr->pos_col);
             }
             curr = next;
         }
     }
 }
 
-double Spreadsheet::sum(int r1, int c1, int r2, int c2) const {
-    double total = 0;
-    int startRow = std::min(r1, r2);
-    int endRow = std::max(r1, r2);
-    int startCol = std::min(c1, c2);
-    int endCol = std::max(c1, c2);
-
-    for (int i = startRow; i <= endRow; ++i) {
-        if (i >= maxRows) break;
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr && curr->col <= endCol) {
-            if (curr->col >= startCol && curr->isNumeric) {
-                total += curr->numericValue;
-            }
-            curr = curr->nextInRow;
-        }
-    }
-    return total;
-}
-
-double Spreadsheet::average(int r1, int c1, int r2, int c2) const {
+// Operaciones de Agregación
+double Spreadsheet::average(int i1, int j1, int i2, int j2) const {
     double total = 0;
     int count = 0;
-    int startRow = std::min(r1, r2);
-    int endRow = std::max(r1, r2);
-    int startCol = std::min(c1, c2);
-    int endCol = std::max(c1, c2);
+    int r_start = std::min(i1, i2), r_end = std::max(i1, i2);
+    int c_start = std::min(j1, j2), c_end = std::max(j1, j2);
 
-    for (int i = startRow; i <= endRow; ++i) {
-        if (i >= maxRows) break;
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr && curr->col <= endCol) {
-            if (curr->col >= startCol && curr->isNumeric) {
+    for (int i = r_start; i <= r_end; ++i) {
+        if (i >= n_rows) break;
+        Node* curr = rows[i];
+        while (curr != nullptr && curr->pos_col <= c_end) {
+            if (curr->pos_col >= c_start && curr->isNumeric) {
                 total += curr->numericValue;
                 count++;
             }
-            curr = curr->nextInRow;
+            curr = curr->next_row;
         }
     }
-    return count > 0 ? total / count : 0.0;
+    return (count > 0) ? (total / count) : 0.0;
 }
 
-double Spreadsheet::max(int r1, int c1, int r2, int c2) const {
+double Spreadsheet::max(int i1, int j1, int i2, int j2) const {
     double mx = -std::numeric_limits<double>::infinity();
     bool found = false;
-    int startRow = std::min(r1, r2);
-    int endRow = std::max(r1, r2);
-    int startCol = std::min(c1, c2);
-    int endCol = std::max(c1, c2);
+    int r_start = std::min(i1, i2), r_end = std::max(i1, i2);
+    int c_start = std::min(j1, j2), c_end = std::max(j1, j2);
 
-    for (int i = startRow; i <= endRow; ++i) {
-        if (i >= maxRows) break;
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr && curr->col <= endCol) {
-            if (curr->col >= startCol && curr->isNumeric) {
-                if (curr->numericValue > mx) {
-                    mx = curr->numericValue;
-                }
+    for (int i = r_start; i <= r_end; ++i) {
+        if (i >= n_rows) break;
+        Node* curr = rows[i];
+        while (curr != nullptr && curr->pos_col <= c_end) {
+            if (curr->pos_col >= c_start && curr->isNumeric) {
+                if (curr->numericValue > mx) mx = curr->numericValue;
                 found = true;
             }
-            curr = curr->nextInRow;
+            curr = curr->next_row;
         }
     }
     return found ? mx : 0.0;
 }
 
-double Spreadsheet::min(int r1, int c1, int r2, int c2) const {
+double Spreadsheet::min(int i1, int j1, int i2, int j2) const {
     double mn = std::numeric_limits<double>::infinity();
     bool found = false;
-    int startRow = std::min(r1, r2);
-    int endRow = std::max(r1, r2);
-    int startCol = std::min(c1, c2);
-    int endCol = std::max(c1, c2);
+    int r_start = std::min(i1, i2), r_end = std::max(i1, i2);
+    int c_start = std::min(j1, j2), c_end = std::max(j1, j2);
 
-    for (int i = startRow; i <= endRow; ++i) {
-        if (i >= maxRows) break;
-        Node* curr = rowHeaders[i];
-        while (curr != nullptr && curr->col <= endCol) {
-            if (curr->col >= startCol && curr->isNumeric) {
-                if (curr->numericValue < mn) {
-                    mn = curr->numericValue;
-                }
+    for (int i = r_start; i <= r_end; ++i) {
+        if (i >= n_rows) break;
+        Node* curr = rows[i];
+        while (curr != nullptr && curr->pos_col <= c_end) {
+            if (curr->pos_col >= c_start && curr->isNumeric) {
+                if (curr->numericValue < mn) mn = curr->numericValue;
                 found = true;
             }
-            curr = curr->nextInRow;
+            curr = curr->next_row;
         }
     }
     return found ? mn : 0.0;

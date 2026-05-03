@@ -4,14 +4,18 @@
 #include <string>
 
 struct Node {
-    int row;
-    int col;
-    std::string rawContent; // Contenido original (ej: "=A1+2" o "123" o "Texto")
-    double numericValue;    // Valor numérico evaluado
-    bool isNumeric;         // Indica si es un número válido (para agregaciones)
+    // Coordenadas
+    int pos_row;
+    int pos_col;
 
-    Node* nextInRow;
-    Node* nextInCol;
+    // Contenido lógico
+    std::string rawContent;
+    double numericValue;
+    bool isNumeric;
+
+    // Punteros de la matriz dispersa
+    Node* next_row;
+    Node* next_col;
 
     // Constructor
     Node(int r, int c, const std::string& content);
