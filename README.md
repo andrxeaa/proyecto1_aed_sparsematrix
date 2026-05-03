@@ -42,6 +42,9 @@ Tienes dos opciones para compilar y ejecutar la hoja de cálculo:
    ```
    *(En Windows con MinGW puede que necesites escribir `mingw32-make` en lugar de `make`)*
 3. **Importante (Solo Windows):** Antes de ejecutar, debes copiar los archivos `.dll` que están en la carpeta `SFML/bin` al lado del archivo `.exe` generado.
+   ```powershell
+   Copy-Item "SFML\bin\*.dll" -Destination "."
+   ```
 4. Ejecuta el programa:
    ```bash
    ./spreadsheet_app

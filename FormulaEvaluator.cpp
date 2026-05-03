@@ -107,7 +107,7 @@ bool FormulaEvaluator::evaluate(const std::string& formula, const Spreadsheet& s
 
 bool FormulaEvaluator::parseCellReference(const std::string& ref, int& outRow, int& outCol) {
     if (ref.empty()) return false;
-    int i = 0;
+    size_t i = 0;
     outCol = 0;
     while (i < ref.length() && std::isalpha(ref[i])) {
         outCol = outCol * 26 + (std::toupper(ref[i]) - 'A' + 1);
