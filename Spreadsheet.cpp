@@ -20,14 +20,24 @@ Spreadsheet::~Spreadsheet() {
 }
 
 Node* Spreadsheet::get(int i, int j) const {
-    if (i < 0 || i >= n_rows || j < 0 || j >= n_cols) return nullptr;
+    if (i < 0 || j < 0 || i >= n_rows || j >= n_cols) return nullptr;
     Node* curr = rows[i];
     while (curr != nullptr && curr->pos_col < j) curr = curr->next_row;
     return (curr != nullptr && curr->pos_col == j) ? curr : nullptr;
 }
 
 void Spreadsheet::insert(int i, int j, const std::string& value) {
-    if (i < 0 || j < 0 || i >= n_rows || j >= n_cols) return;
+    if (i < 0 || j < 0) return;
+
+    // Expansión dinámica de la matriz dispersa (Crece automáticamente)
+    if (i >= n_rows) {
+        rows.resize(i + 1, nullptr);
+        n_rows = i + 1;
+    }
+    if (j >= n_cols) {
+        cols.resize(j + 1, nullptr);
+        n_cols = j + 1;
+    }
 
     // Si la celda existe, la eliminamos primero para re-insertar
     remove(i, j);

@@ -28,6 +28,17 @@ void GUI::handleEvents() {
             window.close();
         }
         
+        if (event.type == sf::Event::Resized) {
+            // Actualizar la vista para que no se estire y la barra quede pegada abajo
+            sf::FloatRect visibleArea(0, 0, event.size.width, event.size.height);
+            window.setView(sf::View(visibleArea));
+            
+            // Recalcular cuántas celdas ENTERAS caben en la nueva pantalla (para el scroll)
+            // Restamos 90 de altura: 30(header col) + 30(input bar) + 30(status bar)
+            visibleRows = (event.size.height - 90) / cellHeight;
+            visibleCols = (event.size.width - cellWidth) / cellWidth;
+        }
+        
         if (event.type == sf::Event::KeyPressed) {
             if (isEditing) {
                 if (event.key.code == sf::Keyboard::Enter) {
@@ -129,8 +140,17 @@ void GUI::executeCommand(const std::string& cmd) {
                 statusMessage = "Suma Columna: " + std::to_string(res);
                 sheet.insert(selectedRow, selectedCol, std::to_string(res));
             }
+        } else if (action == "/GOTO") {
+            int r, c;
+            if (FormulaEvaluator::parseCellReference(arg1, r, c)) {
+                selectedRow = r;
+                selectedCol = c;
+                scrollRow = std::max(0, r - visibleRows / 2);
+                scrollCol = std::max(0, c - visibleCols / 2);
+                statusMessage = "Camara movida a " + arg1;
+            }
         } else {
-            statusMessage = "Comando invalido. Use /SUMA A1 B2, /DELROW 1, etc.";
+            statusMessage = "Comando invalido. Use /SUMA A1 B2, /GOTO Z200, etc.";
         }
     }
 }
@@ -168,8 +188,8 @@ void GUI::renderHeaders() {
     sf::RectangleShape bg(sf::Vector2f(cellWidth, cellHeight));
     bg.setFillColor(sf::Color(220, 220, 220));
     
-    // Headers de Columnas
-    for (int c = 0; c < visibleCols; ++c) {
+    // Headers de Columnas (<= para dibujar la que esta cortada)
+    for (int c = 0; c <= visibleCols; ++c) {
         bg.setPosition((c + 1) * cellWidth, 0);
         window.draw(bg);
         text.setString(FormulaEvaluator::indexToColString(c + scrollCol));
@@ -177,8 +197,8 @@ void GUI::renderHeaders() {
         window.draw(text);
     }
     
-    // Headers de Filas
-    for (int r = 0; r < visibleRows; ++r) {
+    // Headers de Filas (<= para dibujar la que esta cortada)
+    for (int r = 0; r <= visibleRows; ++r) {
         bg.setPosition(0, (r + 1) * cellHeight);
         window.draw(bg);
         text.setString(std::to_string(r + scrollRow + 1));
@@ -191,9 +211,9 @@ void GUI::renderCells() {
     sf::Text text("", font, 14);
     text.setFillColor(sf::Color::Black);
     
-    // Dibujar celdas ocupadas
-    for (int r = scrollRow; r < scrollRow + visibleRows; ++r) {
-        for (int c = scrollCol; c < scrollCol + visibleCols; ++c) {
+    // Dibujar celdas ocupadas y seleccion (<= para cubrir las cortadas)
+    for (int r = scrollRow; r <= scrollRow + visibleRows; ++r) {
+        for (int c = scrollCol; c <= scrollCol + visibleCols; ++c) {
             float px = (c - scrollCol + 1) * cellWidth;
             float py = (r - scrollRow + 1) * cellHeight;
             

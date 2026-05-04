@@ -60,18 +60,26 @@ Ejecuta el archivo generado:
 
 *   **Navegación:** Usa las **flechas del teclado** para moverte por las celdas. La celda seleccionada se resaltará en azul. La vista hará "scroll" automáticamente si llegas al borde.
 *   **Edición:** Presiona **Enter** sobre una celda para editarla (el borde se pondrá rojo). Escribe texto, números o fórmulas (ej. `=A1+2`). Presiona **Enter** para confirmar o **Esc** para cancelar.
-*   **Eliminación de Celda:** Presiona **Delete** (Supr) sobre una celda para borrarla.
+*   **Eliminación de Celda:** Presiona **Delete** (Supr) sobre una celda, o deja el texto vacío al editar y presiona Enter, para borrarla completamente de la memoria.
 *   **Fórmulas Aritméticas:** Cualquier celda que empiece con `=` se evaluará. Soporta `+`, `-`, `*`, `/`, paréntesis y referencias a otras celdas (ej. `=A1*(B2+C3)`).
 
 ### Comandos Avanzados (Barra Inferior)
-Para ejecutar operaciones de rango y eliminación de estructuras completas, entra en modo edición (Enter) en *cualquier* celda y escribe un comando empezando con `/`:
+Para ejecutar operaciones de rango, filas, columnas o navegación, entra en modo edición (Enter) en *cualquier* celda y escribe un comando empezando con `/`:
 
-*   `/SUMA A1 C3` -> Muestra la suma del rango en la barra inferior.
-*   `/PROM A1 C3` -> Muestra el promedio.
-*   `/MAX A1 C3` -> Muestra el máximo.
-*   `/MIN A1 C3` -> Muestra el mínimo.
-*   `/DELRANGE A1 C3` -> Elimina todas las celdas en el rectángulo especificado.
-*   `/DELROW 5` -> Elimina toda la fila 5.
-*   `/DELCOL B` -> Elimina toda la columna B.
+**Operaciones de Rango:** (Muestran el resultado en la barra inferior **y lo escriben estáticamente en la celda actual**)
+*   `/SUMA A1 C3` -> Suma el rango.
+*   `/PROM A1 C3` -> Calcula el promedio del rango.
+*   `/MAX A1 C3` -> Encuentra el valor máximo en el rango.
+*   `/MIN A1 C3` -> Encuentra el valor mínimo en el rango.
 
-*Nota:* Después de ejecutar un comando con Enter, este no se guardará en la celda, sino que se ejecutará como acción global.
+**Operaciones de Filas/Columnas Completas:** (Muestran el resultado y lo escriben en la celda actual)
+*   `/SUMROW 5` -> Suma todos los números de la Fila 5.
+*   `/SUMCOL B` -> Suma todos los números de la Columna B.
+
+**Operaciones Estructurales (Eliminación):**
+*   `/DELRANGE A1 C3` -> Elimina de memoria todas las celdas en el rectángulo.
+*   `/DELROW 5` -> Elimina toda la fila 5 y reconecta los punteros verticales.
+*   `/DELCOL B` -> Elimina toda la columna B y reconecta los punteros horizontales.
+
+**Navegación Rápida:**
+*   `/GOTO Z500` -> Desplaza la cámara instantáneamente a la celda especificada sin tener que mantener presionadas las flechas.

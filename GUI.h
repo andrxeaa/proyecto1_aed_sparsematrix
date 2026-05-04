@@ -18,8 +18,8 @@ private:
     // Configuración visual
     const float cellWidth = 100.0f;
     const float cellHeight = 30.0f;
-    const int visibleRows = 20;
-    const int visibleCols = 10;
+    int visibleRows = 20;
+    int visibleCols = 10;
     
     // Estado de la UI
     int selectedRow;
