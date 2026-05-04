@@ -35,6 +35,10 @@ public:
     double average(int i1, int j1, int i2, int j2) const;
     double max(int i1, int j1, int i2, int j2) const;
     double min(int i1, int j1, int i2, int j2) const;
+
+    // Auxiliares
+    int getMaxRowIndex() const { return n_rows - 1; }
+    int getMaxColIndex() const { return n_cols - 1; }
 };
 
 #endif

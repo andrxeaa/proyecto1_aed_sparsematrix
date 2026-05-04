@@ -87,13 +87,21 @@ void GUI::executeCommand(const std::string& cmd) {
     int r1, c1, r2, c2;
     if (FormulaEvaluator::parseCellReference(arg1, r1, c1) && FormulaEvaluator::parseCellReference(arg2, r2, c2)) {
         if (action == "/SUMA") {
-            statusMessage = "Suma: " + std::to_string(sheet.sum(r1, c1, r2, c2));
+            double res = sheet.sum(r1, c1, r2, c2);
+            statusMessage = "Suma: " + std::to_string(res);
+            sheet.insert(selectedRow, selectedCol, std::to_string(res));
         } else if (action == "/PROM") {
-            statusMessage = "Promedio: " + std::to_string(sheet.average(r1, c1, r2, c2));
+            double res = sheet.average(r1, c1, r2, c2);
+            statusMessage = "Promedio: " + std::to_string(res);
+            sheet.insert(selectedRow, selectedCol, std::to_string(res));
         } else if (action == "/MAX") {
-            statusMessage = "Maximo: " + std::to_string(sheet.max(r1, c1, r2, c2));
+            double res = sheet.max(r1, c1, r2, c2);
+            statusMessage = "Maximo: " + std::to_string(res);
+            sheet.insert(selectedRow, selectedCol, std::to_string(res));
         } else if (action == "/MIN") {
-            statusMessage = "Minimo: " + std::to_string(sheet.min(r1, c1, r2, c2));
+            double res = sheet.min(r1, c1, r2, c2);
+            statusMessage = "Minimo: " + std::to_string(res);
+            sheet.insert(selectedRow, selectedCol, std::to_string(res));
         } else if (action == "/DELRANGE") {
             sheet.deleteRange(r1, c1, r2, c2);
             statusMessage = "Rango eliminado.";
@@ -106,6 +114,20 @@ void GUI::executeCommand(const std::string& cmd) {
             if (FormulaEvaluator::parseCellReference(arg1 + "1", r, c)) { // Hack para parsear col
                 sheet.deleteCol(c);
                 statusMessage = "Columna eliminada.";
+            }
+        } else if (action == "/SUMROW") {
+            try { 
+                int row = std::stoi(arg1) - 1; 
+                double res = sheet.sum(row, 0, row, sheet.getMaxColIndex());
+                statusMessage = "Suma Fila: " + std::to_string(res);
+                sheet.insert(selectedRow, selectedCol, std::to_string(res));
+            } catch(...) {}
+        } else if (action == "/SUMCOL") {
+            int r, c;
+            if (FormulaEvaluator::parseCellReference(arg1 + "1", r, c)) { 
+                double res = sheet.sum(0, c, sheet.getMaxRowIndex(), c);
+                statusMessage = "Suma Columna: " + std::to_string(res);
+                sheet.insert(selectedRow, selectedCol, std::to_string(res));
             }
         } else {
             statusMessage = "Comando invalido. Use /SUMA A1 B2, /DELROW 1, etc.";
