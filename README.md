@@ -41,7 +41,7 @@ Tienes dos opciones para compilar y ejecutar la hoja de cálculo:
    make
    ```
    *(En Windows con MinGW puede que necesites escribir `mingw32-make` en lugar de `make`)*
-3. **Importante (Solo Windows):** Antes de ejecutar, debes copiar los archivos `.dll` que están en la carpeta `SFML/bin` al lado del archivo `.exe` generado.
+3. **Importante (Solo Windows):** Antes de ejecutar, debes copiar los archivos `.dll` que están en la carpeta `SFML/bin` al lado del archivo `.exe` generado. (Descargando el .zip este paso no es necesario)
    ```powershell
    Copy-Item "SFML\bin\*.dll" -Destination "."
    ```
